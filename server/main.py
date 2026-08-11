@@ -21,12 +21,16 @@ VoiceNotes 自建后端服务
 import os
 import re
 import hashlib
+import json
 import random
 import tempfile
+import time
+import asyncio
+from contextlib import suppress
 from typing import List, Optional
 
 import requests
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -183,3 +187,120 @@ def api_transcribe(file: UploadFile = File(...), authorization: Optional[str] = 
         segments, info = model.transcribe(tmp.name, beam_size=5)
         text = "".join(seg.text for seg in segments).strip()
     return {"text": text, "language": getattr(info, "language", None)}
+
+
+# ---------------- 流式 Whisper（WebSocket，边录边出字，类似 WhisperLiveKit） ----------------
+#
+# 协议：
+#   App 连接 ws://<host>:8000/ws/transcribe?lang=zh|en|yue（lang 可省略 → 自动检测）
+#   客户端 → 服务端：二进制帧 = 16kHz/16bit/单声道 PCM 原始字节
+#   客户端 → 服务端：文本帧  "flush" = 停止并返回最终转写；"close" = 直接断开
+#   服务端 → 客户端：JSON 文本帧
+#       {"type":"interim","text":"..."}   滚动中间结果（每积累约 3s 新音频）
+#       {"type":"final","text":"...","language":"en"}   最终完整转写
+#       {"type":"error","message":"..."}
+
+STREAM_INTERVAL_SEC = 3.0       # 每隔这么多秒的"新音频"做一次中间转写
+STREAM_WINDOW_SEC = 15.0        # 中间转写只看最近这么多秒（滚动窗口）
+STREAM_MAX_SEC = 300.0          # 缓冲上限（5 分钟），防止长录音内存无限增长
+_STREAM_BYTES_PER_SEC = 32000   # 16kHz × 16bit / 8 = 32000 B/s
+
+def _pcm_to_float(raw_pcm: bytes):
+    import numpy as np
+    return np.frombuffer(raw_pcm, dtype=np.int16).astype(np.float32) / 32768.0
+
+def _transcribe_audio(model, raw_pcm: bytes, lang: str = ""):
+    """把 PCM 字节交给 Whisper 转写，返回 (text, language)。"""
+    audio = _pcm_to_float(raw_pcm)
+    if audio.size == 0:
+        return "", None
+    language = lang or None
+    segments, info = model.transcribe(
+        audio, language=language, beam_size=1, vad_filter=True,
+        condition_on_previous_text=False,
+    )
+    text = "".join(seg.text for seg in segments).strip()
+    return text, (info.language if language is None else language)
+
+@app.websocket("/ws/transcribe")
+async def ws_transcribe(websocket: WebSocket, lang: str = ""):
+    await websocket.accept()
+    auth = websocket.headers.get("authorization", "")
+    if AUTH_TOKEN and auth != f"Bearer {AUTH_TOKEN}":
+        await websocket.send_text(json.dumps({"type": "error", "message": "AUTH_TOKEN 不匹配"}))
+        await websocket.close(code=4001)
+        return
+    try:
+        model = await asyncio.to_thread(_get_whisper_model)
+    except Exception as e:
+        await websocket.send_text(json.dumps({"type": "error", "message": f"faster-whisper 未安装或加载失败: {e}"}))
+        await websocket.close(code=4002)
+        return
+
+    buffer = bytearray()
+    lock = asyncio.Lock()
+    last_len = 0
+
+    async def stream_loop():
+        nonlocal last_len
+        last_run = time.monotonic()
+        try:
+            while True:
+                await asyncio.sleep(0.5)
+                last_len = min(last_len, len(buffer))
+                now = time.monotonic()
+                if now - last_run >= STREAM_INTERVAL_SEC and len(buffer) > last_len:
+                    last_len = len(buffer)
+                    last_run = now
+                    window = bytes(buffer[-int(STREAM_WINDOW_SEC * _STREAM_BYTES_PER_SEC):])
+                    try:
+                        async with lock:
+                            text, _ = await asyncio.to_thread(_transcribe_audio, model, window, lang)
+                    except Exception as e:
+                        text = ""
+                    if text:
+                        try:
+                            await websocket.send_text(json.dumps({"type": "interim", "text": text}))
+                        except Exception:
+                            return
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            pass
+
+    loop_task = asyncio.create_task(stream_loop())
+    try:
+        while True:
+            msg = await websocket.receive()
+            if msg["type"] == "websocket.receive_bytes":
+                buffer.extend(msg["bytes"])
+                max_bytes = int(STREAM_MAX_SEC * _STREAM_BYTES_PER_SEC)
+                if len(buffer) > max_bytes + int(STREAM_WINDOW_SEC * _STREAM_BYTES_PER_SEC):
+                    del buffer[: len(buffer) - max_bytes]
+            elif msg["type"] == "websocket.receive_text":
+                txt = msg.get("text", "").strip()
+                if txt == "flush":
+                    loop_task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await loop_task
+                    async with lock:
+                        final_text, language = await asyncio.to_thread(
+                            _transcribe_audio, model, bytes(buffer), lang
+                        )
+                    try:
+                        await websocket.send_text(json.dumps({
+                            "type": "final", "text": final_text, "language": language,
+                        }))
+                    except Exception:
+                        pass
+                    break
+                elif txt == "close":
+                    break
+    except WebSocketDisconnect:
+        pass
+    finally:
+        loop_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await loop_task
+        with suppress(Exception):
+            await websocket.close()
