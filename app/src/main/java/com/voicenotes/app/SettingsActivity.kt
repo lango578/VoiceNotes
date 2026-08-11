@@ -27,6 +27,13 @@ class SettingsActivity : AppCompatActivity() {
             Prefs.ENGINE_BAIDU -> binding.rbBaidu.isChecked = true
             else -> binding.rbXunfei.isChecked = true
         }
+        // 载入当前识别语言
+        when (Prefs.lang(this)) {
+            Prefs.LANG_CANTONESE -> binding.rbLangCantonese.isChecked = true
+            Prefs.LANG_ENGLISH -> binding.rbLangEnglish.isChecked = true
+            Prefs.LANG_SICHUAN -> binding.rbLangSichuan.isChecked = true
+            else -> binding.rbLangMandarin.isChecked = true
+        }
         // 讯飞
         binding.etAppId.setText(Prefs.xunfeiAppId(this))
         binding.etApiKey.setText(Prefs.xunfeiApiKey(this))
@@ -48,6 +55,13 @@ class SettingsActivity : AppCompatActivity() {
                 else -> Prefs.ENGINE_XUNFEI
             }
             Prefs.setEngine(this, selected)
+            val lang = when {
+                binding.rbLangCantonese.isChecked -> Prefs.LANG_CANTONESE
+                binding.rbLangEnglish.isChecked -> Prefs.LANG_ENGLISH
+                binding.rbLangSichuan.isChecked -> Prefs.LANG_SICHUAN
+                else -> Prefs.LANG_MANDARIN
+            }
+            Prefs.setLang(this, lang)
             // 讯飞
             Prefs.setXunfeiAppId(this, binding.etAppId.text?.toString().orEmpty())
             Prefs.setXunfeiApiKey(this, binding.etApiKey.text?.toString().orEmpty())
