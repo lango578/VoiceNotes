@@ -4,6 +4,7 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
+import android.text.method.ScrollingMovementMethod
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -11,6 +12,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.voicenotes.app.data.NoteStore
 import com.voicenotes.app.databinding.ActivityNoteDetailBinding
 import com.voicenotes.app.model.Note
+import com.voicenotes.app.trans.TranslationClient
 import com.voicenotes.app.util.applySystemBarInsets
 import java.io.File
 import java.text.SimpleDateFormat
@@ -48,12 +50,70 @@ class NoteDetailActivity : AppCompatActivity() {
         binding.etTranscript.setText(n.transcript)
         binding.metaText.text =
             "时长 ${formatDuration(n.durationMs)} · 创建于 ${formatDate(n.createdAt)}"
+        binding.zhText.movementMethod = ScrollingMovementMethod()
+        renderZh(n)
 
         binding.btnPlay.setOnClickListener { togglePlay(n) }
         binding.btnShareText.setOnClickListener { shareText(n) }
         binding.btnShareAudio.setOnClickListener { shareAudio(n) }
         binding.btnSave.setOnClickListener { save() }
         binding.btnDelete.setOnClickListener { confirmDelete() }
+        binding.btnAnnotate.setOnClickListener { annotateNote(n) }
+    }
+
+    /** 展示中文注释（若有）。 */
+    private fun renderZh(n: Note) {
+        val zh = n.zhTranslation
+        if (zh.isNullOrBlank()) {
+            binding.zhLabel.visibility = android.view.View.GONE
+            binding.zhText.visibility = android.view.View.GONE
+        } else {
+            binding.zhLabel.visibility = android.view.View.VISIBLE
+            binding.zhText.visibility = android.view.View.VISIBLE
+            binding.zhText.text = zh
+        }
+    }
+
+    /** 调用后端/第三方 API 为英文笔记添加逐句中文注释。 */
+    private fun annotateNote(n: Note) {
+        if (!TranslationClient.isMostlyEnglish(n.transcript)) {
+            Toast.makeText(this, R.string.toast_annotate_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+        binding.btnAnnotate.isEnabled = false
+        Toast.makeText(this, R.string.toast_annotating, Toast.LENGTH_SHORT).show()
+        TranslationClient.annotate(
+            context = this,
+            englishText = n.transcript,
+            onDone = { zh ->
+                runOnUiThread {
+                    binding.btnAnnotate.isEnabled = true
+                    if (zh.isNullOrBlank()) {
+                        Toast.makeText(
+                            this,
+                            getString(R.string.toast_annotate_failed, "返回为空"),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@runOnUiThread
+                    }
+                    val updated = n.copy(zhTranslation = zh)
+                    NoteStore.save(this, updated)
+                    note = updated
+                    renderZh(updated)
+                    Toast.makeText(this, R.string.toast_annotate_done, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onError = { msg ->
+                runOnUiThread {
+                    binding.btnAnnotate.isEnabled = true
+                    Toast.makeText(
+                        this,
+                        getString(R.string.toast_annotate_failed, msg),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        )
     }
 
     private fun togglePlay(n: Note) {
