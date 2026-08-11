@@ -18,6 +18,9 @@ object Prefs {
     const val LANG_ENGLISH = "english"
     const val LANG_SICHUAN = "sichuan"
 
+    const val ANNOTATE_PROVIDER_BACKEND = "backend"
+    const val ANNOTATE_PROVIDER_OPENAI = "openai"
+
     private fun sp(c: Context) = c.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
     fun engine(c: Context): String =
@@ -80,5 +83,49 @@ object Prefs {
     fun baiduSecretKey(c: Context): String = sp(c).getString("bd_secretkey", "").orEmpty()
     fun setBaiduSecretKey(c: Context, v: String) {
         sp(c).edit().putString("bd_secretkey", v.trim()).apply()
+    }
+
+    // ---- 英文→中文注释 ----
+
+    /** 识别为英文时，是否自动给每句加中文注释。 */
+    fun annotateZhEnabled(c: Context): Boolean =
+        sp(c).getBoolean("annotate_zh", false)
+
+    fun setAnnotateZhEnabled(c: Context, v: Boolean) {
+        sp(c).edit().putBoolean("annotate_zh", v).apply()
+    }
+
+    /** backend = 自建后端；openai = 直连 OpenAI 兼容 API（DeepSeek 等）。 */
+    fun annotateProvider(c: Context): String =
+        sp(c).getString("annotate_provider", ANNOTATE_PROVIDER_BACKEND) ?: ANNOTATE_PROVIDER_BACKEND
+
+    fun setAnnotateProvider(c: Context, v: String) {
+        sp(c).edit().putString("annotate_provider", v).apply()
+    }
+
+    fun annotateBackendUrl(c: Context): String =
+        sp(c).getString("annotate_backend_url", "http://192.168.1.100:8000").orEmpty()
+
+    fun setAnnotateBackendUrl(c: Context, v: String) {
+        sp(c).edit().putString("annotate_backend_url", v.trim()).apply()
+    }
+
+    fun annotateApiKey(c: Context): String = sp(c).getString("annotate_api_key", "").orEmpty()
+    fun setAnnotateApiKey(c: Context, v: String) {
+        sp(c).edit().putString("annotate_api_key", v.trim()).apply()
+    }
+
+    fun annotateBaseUrl(c: Context): String =
+        sp(c).getString("annotate_base_url", "https://api.deepseek.com").orEmpty()
+
+    fun setAnnotateBaseUrl(c: Context, v: String) {
+        sp(c).edit().putString("annotate_base_url", v.trim()).apply()
+    }
+
+    fun annotateModel(c: Context): String =
+        sp(c).getString("annotate_model", "deepseek-chat").orEmpty()
+
+    fun setAnnotateModel(c: Context, v: String) {
+        sp(c).edit().putString("annotate_model", v.trim()).apply()
     }
 }
