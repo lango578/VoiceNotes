@@ -51,6 +51,55 @@
                 android:text="@string/settings_engine_system" />
         </RadioGroup>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/settings_lang_label"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/langGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <RadioButton
+                android:id="@+id/rbLangMandarin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_lang_mandarin" />
+
+            <RadioButton
+                android:id="@+id/rbLangCantonese"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_lang_cantonese" />
+
+            <RadioButton
+                android:id="@+id/rbLangEnglish"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_lang_english" />
+
+            <RadioButton
+                android:id="@+id/rbLangSichuan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_lang_sichuan" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:lineSpacingExtra="3dp"
+            android:text="@string/settings_lang_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
