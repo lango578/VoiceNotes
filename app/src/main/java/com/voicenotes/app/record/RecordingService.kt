@@ -21,6 +21,7 @@ import com.voicenotes.app.R
 import com.voicenotes.app.data.NoteStore
 import com.voicenotes.app.data.Prefs
 import com.voicenotes.app.model.Note
+import com.voicenotes.app.trans.TranslationClient
 import java.io.File
 import java.util.UUID
 import kotlin.math.sqrt
@@ -379,6 +380,35 @@ class RecordingService : Service() {
             audioFileName = audioFile?.name
         )
         NoteStore.save(this, note)
+
+        // 英文识别时自动为每句话添加中文注释（后台异步，不阻塞保存）
+        if (transcript.isNotBlank() &&
+            Prefs.annotateZhEnabled(this) &&
+            TranslationClient.isMostlyEnglish(transcript)
+        ) {
+            RecorderSession.update {
+                it.copy(statusText = getString(R.string.recorder_status_annotating))
+            }
+            TranslationClient.annotate(
+                context = this,
+                englishText = transcript,
+                onDone = { zh ->
+                    if (!zh.isNullOrBlank()) {
+                        NoteStore.save(this, note.copy(zhTranslation = zh))
+                        sendBroadcast(Intent(ACTION_NOTE_SAVED).setPackage(packageName))
+                    }
+                    RecorderSession.update {
+                        it.copy(statusText = getString(R.string.toast_saved))
+                    }
+                },
+                onError = { msg ->
+                    Log.e(TAG, "添加中文注释失败: $msg")
+                    RecorderSession.update {
+                        it.copy(statusText = getString(R.string.toast_saved))
+                    }
+                }
+            )
+        }
 
         RecorderSession.update {
             it.copy(
