@@ -1,8 +1,10 @@
 # VoiceNotes 后端服务（自建翻译 + 可选 Whisper 转写）
 
-为"语音笔记"App 提供 **英文→中文逐句注释** 和可选的 **自托管 Whisper 转写**（思路参考 [WhisperLiveKit](https://github.com/QuentinFuxa/WhisperLiveKit)，本项目聚焦你的使用场景，依赖更轻）。
+为"语音笔记"App 提供 **英文→中文逐句注释**、**自托管 Whisper 转写**（含 **WebSocket 流式边录边出字**，思路参考 [WhisperLiveKit](https://github.com/QuentinFuxa/WhisperLiveKit)，本项目聚焦你的使用场景，依赖更轻）。
 
-> 🐧 **Linux 部署请直接看 [README_LINUX.md](README_LINUX.md)**：一键安装脚本、systemd 开机自启、GPU(CUDA) 适配、防火墙/Nginx、故障排查。
+> 🐧 **Linux 部署**请直接看 [README_LINUX.md](README_LINUX.md)：一键安装脚本、systemd 开机自启、GPU(CUDA) 适配、防火墙/Nginx、故障排查。
+> 🖥️ **Windows / macOS 本机部署**请看 [README_LOCAL.md](README_LOCAL.md)：一键脚本、开机自启（计划任务 / launchd）。
+> 🌐 **异地组网（无公网 IP）**请看 [README_TAILSCALE.md](README_TAILSCALE.md)：手机在外也能连回家里服务器。
 
 ## 功能
 
@@ -12,6 +14,7 @@
 | `/api/translate` | POST | `{"text":"..."}` → `{"translated":"中文"}` 整段翻译 |
 | `/api/annotate` | POST | `{"text":"英文段落"}` → `{"sentences":[{"en","zh"},...],"annotated":"英文句\n中文\n\n..."}` 逐句注释 |
 | `/api/transcribe` | POST | 上传音频文件 → `{"text":"...","language":"en"}` 自托管 Whisper 转写（可选） |
+| `/ws/transcribe` | WS | **流式转写（边录边出字）**：上行 PCM 二进制帧，下行 `{"type":"interim|final","text":...}`，`flush` 结束 |
 
 可选鉴权：设置 `AUTH_TOKEN` 后，所有接口需带请求头 `Authorization: Bearer <token>`。
 
