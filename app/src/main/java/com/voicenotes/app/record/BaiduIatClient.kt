@@ -24,6 +24,7 @@ class BaiduIatClient(
     private val appId: String,
     private val apiKey: String,
     private val secretKey: String,
+    private val language: String,
     private val onResult: (isFinal: Boolean, text: String) -> Unit,
     private val onError: (String) -> Unit
 ) : IatStreamClient {
@@ -32,8 +33,6 @@ class BaiduIatClient(
         private const val TAG = "BaiduIatClient"
         private const val HOST = "vop.baidu.com"
         private const val PATH = "/realtime_asr"
-        /** 16k 普通话。 */
-        private const val DEV_PID = 15372
         private const val CLOSE_TIMEOUT_MS = 6_000L
     }
 
@@ -86,7 +85,7 @@ class BaiduIatClient(
         try {
             val sn = UUID.randomUUID().toString().replace("-", "")
             val cuid = "voicenotes_" + (System.currentTimeMillis() % 1_000_000L)
-            val url = "wss://$HOST$PATH?sn=$sn&appid=$appId&dev_pid=$DEV_PID" +
+            val url = "wss://$HOST$PATH?sn=$sn&appid=$appId&dev_pid=$devPid" +
                 "&cuid=$cuid&format=pcm&sample=16000&rate=16000&access_token=$token"
             val request = Request.Builder().url(url).build()
             webSocket = wsClient.newWebSocket(request, listener)
@@ -143,6 +142,15 @@ class BaiduIatClient(
 
     // ---------------- 内部实现 ----------------
 
+    /** dev_pid：15372 普通话 / 16362 粤语 / 17372 英语 / 19362 四川话。 */
+    private val devPid: Int
+        get() = when (language) {
+            "cantonese" -> 16362
+            "english" -> 17372
+            "sichuan" -> 19362
+            else -> 15372
+        }
+
     private val listener = object : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -152,7 +160,7 @@ class BaiduIatClient(
                 val data = JSONObject()
                     .put("appid", appId)
                     .put("appkey", apiKey)
-                    .put("dev_pid", DEV_PID)
+                    .put("dev_pid", devPid)
                     .put("cuid", "voicenotes")
                     .put("format", "pcm")
                     .put("sample", 16000)
