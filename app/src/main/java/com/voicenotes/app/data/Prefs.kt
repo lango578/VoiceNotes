@@ -13,6 +13,11 @@ object Prefs {
     const val ENGINE_BAIDU = "baidu"
     const val ENGINE_SYSTEM = "system"
 
+    const val LANG_MANDARIN = "mandarin"
+    const val LANG_CANTONESE = "cantonese"
+    const val LANG_ENGLISH = "english"
+    const val LANG_SICHUAN = "sichuan"
+
     private fun sp(c: Context) = c.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
     fun engine(c: Context): String =
@@ -20,6 +25,14 @@ object Prefs {
 
     fun setEngine(c: Context, v: String) {
         sp(c).edit().putString("engine", v).apply()
+    }
+
+    /** 识别语言（普通话/粤语/英语/四川话）。 */
+    fun lang(c: Context): String =
+        sp(c).getString("lang", LANG_MANDARIN) ?: LANG_MANDARIN
+
+    fun setLang(c: Context, v: String) {
+        sp(c).edit().putString("lang", v).apply()
     }
 
     fun xunfeiAppId(c: Context): String = sp(c).getString("xf_appid", "").orEmpty()
