@@ -25,6 +25,7 @@ class SettingsActivity : AppCompatActivity() {
             Prefs.ENGINE_SYSTEM -> binding.rbSystem.isChecked = true
             Prefs.ENGINE_TENCENT -> binding.rbTencent.isChecked = true
             Prefs.ENGINE_BAIDU -> binding.rbBaidu.isChecked = true
+            Prefs.ENGINE_BACKEND -> binding.rbBackend.isChecked = true
             else -> binding.rbXunfei.isChecked = true
         }
         // 载入当前识别语言
@@ -63,6 +64,7 @@ class SettingsActivity : AppCompatActivity() {
                 binding.rbSystem.isChecked -> Prefs.ENGINE_SYSTEM
                 binding.rbTencent.isChecked -> Prefs.ENGINE_TENCENT
                 binding.rbBaidu.isChecked -> Prefs.ENGINE_BAIDU
+                binding.rbBackend.isChecked -> Prefs.ENGINE_BACKEND
                 else -> Prefs.ENGINE_XUNFEI
             }
             Prefs.setEngine(this, selected)
