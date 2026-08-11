@@ -93,7 +93,22 @@ curl -X POST http://127.0.0.1:8000/api/annotate -H "Content-Type: application/js
 
 ## 2. Windows 部署
 
-### 2.1 一键脚本（推荐）
+### 2.0 便携包（推荐，解压即用）
+
+下载 **VoiceNotes-server-windows.zip**（GitHub Release 页，内置 Python 与全部依赖，**无需安装 Python/ffmpeg**）：
+
+1. 解压到电脑任意位置（路径最好不含中文/空格），得到文件夹 `voicenotes-server-windows\`
+2. 用记事本打开 `.env`，填入 `DEEPSEEK_API_KEY`（DeepSeek 密钥，英文→中文注释用；只转写可留空）
+3. 双击 **`start.bat`** 启动服务
+4. 浏览器打开 `http://127.0.0.1:8000/health`，看到 `{"status":"ok","provider":"deepseek"}` 即成功
+5. 手机 App：识别引擎=自建后端识别（Whisper），后端地址=`http://<电脑局域网IP>:8000`
+6. （可选）双击 `install_autostart.bat` 注册开机自启；`uninstall_autostart.bat` 取消
+
+> 首次使用 Whisper 转写会自动下载模型（small 约 460MB，需联网，仅一次）。
+> 国内网络下载慢时在 `.env` 末尾加 `HF_ENDPOINT=https://hf-mirror.com` 后重启。
+> 打包与自检脚本：`server/windows/build_portable.ps1`。
+
+### 2.1 一键脚本（开发/自建）
 
 把仓库 `server/` 目录放到电脑上，例如 `D:\server`，然后以 **管理员** PowerShell 运行：
 
