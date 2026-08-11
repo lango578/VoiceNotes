@@ -20,6 +20,7 @@
 - **Background recording**: Foreground service with a persistent notification — keeps working with the screen off.
 - **Notes management**: Auto-titled notes with edit / playback / share / delete.
 - **Multiple recognition engines**: Xunfei (default), Tencent Cloud, and Baidu AI — switch anytime in Settings; plus the on-device system recognizer when available.
+- **Language switching**: Choose recognition language — Mandarin, Cantonese, English, or Sichuan dialect (support depends on the selected engine).
 
 ### Requirements
 - Android 8.0+ (API 26); optimized for Android 16 (API 36).
@@ -41,6 +42,7 @@ All recordings and notes are stored **on your device** in the app's private stor
 | 笔记列表 | 自动以转写前 20 字作为标题，可查看时长/日期/预览 |
 | 编辑分享 | 可编辑标题与正文；分享文字、分享录音、删除 |
 | 多引擎 | 讯飞 / 腾讯云 / 百度智能云 三选一（App 内切换）；另可选用系统识别（需设备带识别服务） |
+| 多语言 | 识别语言可切换：普通话 / 粤语 / 英语 / 四川话（支持程度取决于所选引擎） |
 
 ---
 
