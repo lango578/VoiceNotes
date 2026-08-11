@@ -32,6 +32,12 @@
     <string name="settings_engine_xunfei">讯飞云端识别（xfyun.cn）</string>
     <string name="settings_engine_tencent">腾讯云实时语音识别（cloud.tencent.com）</string>
     <string name="settings_engine_baidu">百度智能云实时语音识别（cloud.baidu.com）</string>
+    <string name="settings_lang_label">识别语言</string>
+    <string name="settings_lang_mandarin">普通话</string>
+    <string name="settings_lang_cantonese">粤语</string>
+    <string name="settings_lang_english">英语</string>
+    <string name="settings_lang_sichuan">四川话</string>
+    <string name="settings_lang_hint">说明：方言/语种支持取决于所选引擎——讯飞、百度支持普通话/粤语/英语/四川话；腾讯云当前按普通话/英语处理。</string>
     <string name="settings_engine_system">系统语音识别（仅设备装有系统识别服务时可用）</string>
     <string name="settings_xunfei_title">讯飞密钥（控制台获取）</string>
     <string name="hint_app_id">AppID</string>
