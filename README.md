@@ -9,6 +9,27 @@
 
 ---
 
+## English Introduction
+
+**Voice Notes** is an Android app that **transcribes speech to text in real time while recording** — ideal for taking notes during meetings, lectures, or personal dictation.
+
+### Key Features
+- **Real-time transcription**: Words appear on screen as you speak (≈0.5–1s latency).
+- **Continuous long recording**: Auto-renews sessions every 50 seconds (Xunfei engine) to support unlimited-length dictation.
+- **Audio recording**: 16kHz AAC `.m4a` files (WAV fallback), stored privately in the app's internal storage.
+- **Background recording**: Foreground service with a persistent notification — keeps working with the screen off.
+- **Notes management**: Auto-titled notes with edit / playback / share / delete.
+- **Multiple recognition engines**: Xunfei (default), Tencent Cloud, and Baidu AI — switch anytime in Settings; plus the on-device system recognizer when available.
+
+### Requirements
+- Android 8.0+ (API 26); optimized for Android 16 (API 36).
+- One cloud ASR account (Xunfei / Tencent Cloud / Baidu AI) to obtain API keys — see the provider table below.
+
+### Privacy
+All recordings and notes are stored **on your device** in the app's private storage. Audio is sent to the selected cloud ASR provider **only while you are recording**, for the sole purpose of transcription.
+
+---
+
 ## 功能
 
 | 功能 | 说明 |
@@ -126,7 +147,18 @@ app/src/main/java/com/voicenotes/app/
 - **录音与识别不同步 / 前几秒没识别**：会话建立需要约 0.5~1 秒，属正常现象。
 - **后台一段时间后被系统杀掉**：在系统设置里允许本应用后台运行/自启动（部分国产 ROM 默认限制）。
 
-## 免责声明
+## 免责声明 / Disclaimer
 
-本应用仅作学习与个人使用。讯飞接口调用产生的费用/免费额度以讯飞开放平台规则为准；
-请勿在未获他人同意的情况下录音。
+**中文**
+本应用（VoiceNotes）仅用于学习与个人使用，按"现状"提供，不提供任何明示或默示的担保。
+- 云端语音识别产生的调用费用、免费额度与数据使用规则，以各服务商（讯飞 / 腾讯云 / 百度智能云）平台规则为准；
+- 录音内容仅用于转写，请遵守当地法律法规，**未经他人同意请勿录音**；
+- 请妥善保管各家 API 密钥，切勿泄露；如泄露请及时在对应控制台重置；
+- 因使用本应用而产生的任何损失，作者不承担任何责任。
+
+**English**
+VoiceNotes is provided for learning and personal use only, "as is", without any express or implied warranty.
+- Cloud speech recognition costs, quotas and data policies are subject to each provider's terms (Xunfei / Tencent Cloud / Baidu AI).
+- Recorded audio is used only for transcription. Please comply with local laws and **do not record others without their consent**.
+- Keep your API keys secure and reset them immediately if they are compromised.
+- The author is not liable for any loss arising from the use of this application.
