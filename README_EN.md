@@ -34,7 +34,7 @@
 | Audio recording | 16 kHz AAC `.m4a` files (WAV fallback), stored privately |
 | Background recording | Foreground service with a persistent notification; keeps working with the screen off |
 | Notes management | Auto-titled notes; view, edit, play audio, share text/audio, delete |
-| Multiple engines | Xunfei / Tencent Cloud / Baidu AI / **self-hosted backend (Whisper)** / system recognizer — switch in Settings |
+| Multiple engines | Xunfei / Tencent Cloud / Baidu AI / **self-hosted backend (Whisper, real-time streaming)** / system recognizer — switch in Settings |
 | Language switching | Mandarin, Cantonese, English, Sichuan dialect (support depends on the engine) |
 | English → Chinese notes | When English is recognized, each sentence gets a Chinese translation underneath (via a self-hosted backend or a third-party API such as DeepSeek) |
 
@@ -93,6 +93,7 @@ Full server documentation: [server/README.md](server/README.md).
 | `GET` | `/api/health` | Health check, returns server status |
 | `POST` | `/api/annotate` | JSON `{"text": "...", "source": "en", "target": "zh"}` → returns translated lines |
 | `POST` | `/api/transcribe` | Multipart audio upload (`file`) → returns `{"text": "...", "language": "...", "annotations": [...]}` |
+| `WS` | `/ws/transcribe` | **Real-time streaming transcription** — send 16 kHz/16-bit PCM binary frames, receive `{"type":"interim","text":...}` while talking and `{"type":"final","text":...}` after sending `flush` |
 | `GET` | `/api/provider` | Returns the configured translation provider |
 
 ### 7.2 Run with Python
