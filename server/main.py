@@ -48,6 +48,8 @@ AUTH_TOKEN = os.getenv("AUTH_TOKEN", "")
 
 # 可选 Whisper（类似 WhisperLiveKit）
 WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL", "small")
+WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "auto")            # auto | cpu | cuda
+WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "int8")  # int8 | float16
 _whisper_model = None
 
 app = FastAPI(title="VoiceNotes Server", version="1.0.0")
@@ -167,7 +169,7 @@ def _get_whisper_model():
     if _whisper_model is None:
         from faster_whisper import WhisperModel  # 可选依赖
         _whisper_model = WhisperModel(
-            WHISPER_MODEL_NAME, device="auto", compute_type="int8"
+            WHISPER_MODEL_NAME, device=WHISPER_DEVICE, compute_type=WHISPER_COMPUTE_TYPE
         )
     return _whisper_model
 
