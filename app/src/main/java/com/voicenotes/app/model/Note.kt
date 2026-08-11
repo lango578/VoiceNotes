@@ -11,7 +11,9 @@ data class Note(
     val createdAt: Long,
     val durationMs: Long,
     val transcript: String,
-    val audioFileName: String?
+    val audioFileName: String?,
+    /** 英文识别时的逐句中文注释（可空）。 */
+    val zhTranslation: String? = null
 ) {
     fun toJson(): String = JSONObject().apply {
         put("id", id)
@@ -20,6 +22,7 @@ data class Note(
         put("durationMs", durationMs)
         put("transcript", transcript)
         put("audioFileName", audioFileName ?: "")
+        put("zhTranslation", zhTranslation ?: "")
     }.toString()
 
     companion object {
@@ -29,7 +32,8 @@ data class Note(
             createdAt = json.optLong("createdAt", 0L),
             durationMs = json.optLong("durationMs", 0L),
             transcript = json.optString("transcript", ""),
-            audioFileName = json.optString("audioFileName", "").takeIf { it.isNotBlank() }
+            audioFileName = json.optString("audioFileName", "").takeIf { it.isNotBlank() },
+            zhTranslation = json.optString("zhTranslation", "").takeIf { it.isNotBlank() }
         )
     }
 }
