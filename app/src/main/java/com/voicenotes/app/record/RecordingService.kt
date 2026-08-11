@@ -54,7 +54,7 @@ class RecordingService : Service() {
     private var audioRecord: AudioRecord? = null
     private var audioSink: AudioFileSink? = null
     private var systemAudioFile: File? = null
-    private var xunfei: XunfeiIatClient? = null
+    private var streamClient: IatStreamClient? = null
     private var systemRecognizer: SystemRecognizerClient? = null
     private var mediaRecorder: MediaRecorder? = null
 
@@ -114,7 +114,45 @@ class RecordingService : Service() {
                     failStart(getString(R.string.toast_keys_missing))
                     return
                 }
-                startXunfeiEngine(appId, apiKey, apiSecret)
+                startStreamingEngine(
+                    XunfeiIatClient(
+                        appId, apiKey, apiSecret,
+                        onResult = { isFinal, text -> handleTranscript(isFinal, text) },
+                        onError = { msg -> handleEngineError(msg) }
+                    )
+                )
+            }
+            Prefs.ENGINE_TENCENT -> {
+                val appId = Prefs.tencentAppId(this)
+                val secretId = Prefs.tencentSecretId(this)
+                val secretKey = Prefs.tencentSecretKey(this)
+                if (appId.isBlank() || secretId.isBlank() || secretKey.isBlank()) {
+                    failStart(getString(R.string.toast_keys_missing))
+                    return
+                }
+                startStreamingEngine(
+                    TencentIatClient(
+                        appId, secretId, secretKey,
+                        onResult = { isFinal, text -> handleTranscript(isFinal, text) },
+                        onError = { msg -> handleEngineError(msg) }
+                    )
+                )
+            }
+            Prefs.ENGINE_BAIDU -> {
+                val appId = Prefs.baiduAppId(this)
+                val apiKey = Prefs.baiduApiKey(this)
+                val secretKey = Prefs.baiduSecretKey(this)
+                if (appId.isBlank() || apiKey.isBlank() || secretKey.isBlank()) {
+                    failStart(getString(R.string.toast_keys_missing))
+                    return
+                }
+                startStreamingEngine(
+                    BaiduIatClient(
+                        appId, apiKey, secretKey,
+                        onResult = { isFinal, text -> handleTranscript(isFinal, text) },
+                        onError = { msg -> handleEngineError(msg) }
+                    )
+                )
             }
             else -> {
                 if (!SpeechRecognizer.isRecognitionAvailable(this)) {
@@ -137,7 +175,7 @@ class RecordingService : Service() {
 
     // ---------------- 讯飞引擎 ----------------
 
-    private fun startXunfeiEngine(appId: String, apiKey: String, apiSecret: String) {
+    private fun startStreamingEngine(client: IatStreamClient) {
         val aacSink = AacFileWriter(File(NoteStore.recordingsDir(this), "$sessionId.m4a"))
         audioSink = if (aacSink.isUsable) {
             aacSink
@@ -146,22 +184,16 @@ class RecordingService : Service() {
             WavFileWriter(File(NoteStore.recordingsDir(this), "$sessionId.wav"))
         }
 
-        xunfei = XunfeiIatClient(
-            appId = appId,
-            apiKey = apiKey,
-            apiSecret = apiSecret,
-            onResult = { isFinal, text -> handleTranscript(isFinal, text) },
-            onError = { msg -> handleEngineError(msg) }
-        )
+        streamClient = client
 
         if (!startAudioRecord()) {
             failStart(getString(R.string.record_failed, "AudioRecord 初始化失败"))
-            xunfei?.shutdown()
-            xunfei = null
+            client.shutdown()
+            streamClient = null
             return
         }
 
-        xunfei?.start()
+        client.start()
         audioThread = Thread({ audioLoop() }, "audio-capture").also { it.start() }
     }
 
@@ -207,7 +239,7 @@ class RecordingService : Service() {
             }
             if (n <= 0) continue
             audioSink?.write(buf, n)
-            xunfei?.feedPcm(buf.copyOf(n))
+            streamClient?.feedPcm(buf.copyOf(n))
             val now = SystemClock.elapsedRealtime()
             if (now - lastUi >= 200) {
                 lastUi = now
@@ -292,7 +324,10 @@ class RecordingService : Service() {
         releaseAudioRecord()
 
         val engine = Prefs.engine(this)
-        val audioFile = if (engine == Prefs.ENGINE_XUNFEI) {
+        val isStreaming = engine == Prefs.ENGINE_XUNFEI ||
+            engine == Prefs.ENGINE_TENCENT ||
+            engine == Prefs.ENGINE_BAIDU
+        val audioFile = if (isStreaming) {
             audioSink?.finish().also { audioSink = null }
         } else {
             releaseMediaRecorder()
@@ -303,12 +338,12 @@ class RecordingService : Service() {
             it.copy(statusText = getString(R.string.recorder_status_stopping))
         }
 
-        if (engine == Prefs.ENGINE_XUNFEI) {
-            val x = xunfei
-            if (x != null) {
-                x.stop {
-                    x.shutdown()
-                    xunfei = null
+        if (isStreaming) {
+            val c = streamClient
+            if (c != null) {
+                c.stop {
+                    c.shutdown()
+                    streamClient = null
                     finalizeAndSave(audioFile)
                 }
             } else {
@@ -480,8 +515,8 @@ class RecordingService : Service() {
             releaseAudioRecord()
             audioSink?.finish()
             audioSink = null
-            xunfei?.shutdown()
-            xunfei = null
+            streamClient?.shutdown()
+            streamClient = null
             systemRecognizer?.destroy()
             systemRecognizer = null
             releaseMediaRecorder()
