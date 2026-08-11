@@ -33,6 +33,7 @@ class XunfeiIatClient(
     private val appId: String,
     private val apiKey: String,
     private val apiSecret: String,
+    private val language: String,
     private val onResult: (isFinal: Boolean, text: String) -> Unit,
     private val onError: (String) -> Unit
 ) : IatStreamClient {
@@ -174,13 +175,19 @@ class XunfeiIatClient(
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.i(TAG, "会话已建立")
+            val (lang, accent) = when (language) {
+                "english" -> "en_us" to "mandarin"
+                "cantonese" -> "zh_cn" to "cantonese"
+                "sichuan" -> "zh_cn" to "sichuan"
+                else -> "zh_cn" to "mandarin"
+            }
             val frame = JSONObject()
                 .put("common", JSONObject().put("app_id", appId))
                 .put(
                     "business", JSONObject()
-                        .put("language", "zh_cn")
+                        .put("language", lang)
                         .put("domain", "iat")
-                        .put("accent", "mandarin")
+                        .put("accent", accent)
                         .put("vad_eos", 10000)   // 静音 10 秒结束当前句
                         .put("dwa", "wpgs")       // 动态修正：字级实时结果
                         .put("ptt", 1)            // 中文标点
