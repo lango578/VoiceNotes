@@ -8,7 +8,7 @@ import com.voicenotes.app.databinding.ActivitySettingsBinding
 import com.voicenotes.app.util.applySystemBarInsets
 
 /**
- * 设置：选择识别引擎 + 填写讯飞密钥。
+ * 设置：选择识别引擎 + 填写各家密钥。
  */
 class SettingsActivity : AppCompatActivity() {
 
@@ -21,27 +21,49 @@ class SettingsActivity : AppCompatActivity() {
         applySystemBarInsets(binding.root)
 
         // 载入当前设置
-        if (Prefs.engine(this) == Prefs.ENGINE_SYSTEM) {
-            binding.rbSystem.isChecked = true
-        } else {
-            binding.rbXunfei.isChecked = true
+        when (Prefs.engine(this)) {
+            Prefs.ENGINE_SYSTEM -> binding.rbSystem.isChecked = true
+            Prefs.ENGINE_TENCENT -> binding.rbTencent.isChecked = true
+            Prefs.ENGINE_BAIDU -> binding.rbBaidu.isChecked = true
+            else -> binding.rbXunfei.isChecked = true
         }
+        // 讯飞
         binding.etAppId.setText(Prefs.xunfeiAppId(this))
         binding.etApiKey.setText(Prefs.xunfeiApiKey(this))
         binding.etApiSecret.setText(Prefs.xunfeiApiSecret(this))
+        // 腾讯云
+        binding.etTencentAppId.setText(Prefs.tencentAppId(this))
+        binding.etTencentSecretId.setText(Prefs.tencentSecretId(this))
+        binding.etTencentSecretKey.setText(Prefs.tencentSecretKey(this))
+        // 百度智能云
+        binding.etBaiduAppId.setText(Prefs.baiduAppId(this))
+        binding.etBaiduApiKey.setText(Prefs.baiduApiKey(this))
+        binding.etBaiduSecretKey.setText(Prefs.baiduSecretKey(this))
 
         binding.btnSaveSettings.setOnClickListener {
-            val selected = if (binding.rbSystem.isChecked) {
-                Prefs.ENGINE_SYSTEM
-            } else {
-                Prefs.ENGINE_XUNFEI
+            val selected = when {
+                binding.rbSystem.isChecked -> Prefs.ENGINE_SYSTEM
+                binding.rbTencent.isChecked -> Prefs.ENGINE_TENCENT
+                binding.rbBaidu.isChecked -> Prefs.ENGINE_BAIDU
+                else -> Prefs.ENGINE_XUNFEI
             }
             Prefs.setEngine(this, selected)
+            // 讯飞
             Prefs.setXunfeiAppId(this, binding.etAppId.text?.toString().orEmpty())
             Prefs.setXunfeiApiKey(this, binding.etApiKey.text?.toString().orEmpty())
             Prefs.setXunfeiApiSecret(this, binding.etApiSecret.text?.toString().orEmpty())
+            // 腾讯云
+            Prefs.setTencentAppId(this, binding.etTencentAppId.text?.toString().orEmpty())
+            Prefs.setTencentSecretId(this, binding.etTencentSecretId.text?.toString().orEmpty())
+            Prefs.setTencentSecretKey(this, binding.etTencentSecretKey.text?.toString().orEmpty())
+            // 百度智能云
+            Prefs.setBaiduAppId(this, binding.etBaiduAppId.text?.toString().orEmpty())
+            Prefs.setBaiduApiKey(this, binding.etBaiduApiKey.text?.toString().orEmpty())
+            Prefs.setBaiduSecretKey(this, binding.etBaiduSecretKey.text?.toString().orEmpty())
+
             Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_SHORT).show()
             finish()
         }
     }
 }
+
