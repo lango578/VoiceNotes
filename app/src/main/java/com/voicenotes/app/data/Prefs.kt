@@ -11,6 +11,7 @@ object Prefs {
     const val ENGINE_XUNFEI = "xunfei"
     const val ENGINE_TENCENT = "tencent"
     const val ENGINE_BAIDU = "baidu"
+    const val ENGINE_BACKEND = "backend"
     const val ENGINE_SYSTEM = "system"
 
     const val LANG_MANDARIN = "mandarin"
