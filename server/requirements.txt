@@ -2,6 +2,7 @@ fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
 requests>=2.32.0
 python-multipart>=0.0.9
+numpy>=1.24.0
 
-# 可选：自托管 Whisper 转写（类似 WhisperLiveKit；不装则 /api/transcribe 不可用）
+# 可选：自托管 Whisper 转写 + 流式转写（不装则 /api/transcribe 与 /ws/transcribe 不可用）
 # faster-whisper>=1.0.3
