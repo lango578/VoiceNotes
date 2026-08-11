@@ -11,6 +11,8 @@
     <string name="recorder_status_recording">正在录音转写…</string>
     <string name="recorder_status_stopping">正在保存…</string>
     <string name="recorder_status_annotating">正在添加中文注释…</string>
+    <string name="recorder_status_backend_asr">后端识别：录音结束后转写</string>
+    <string name="recorder_status_backend_transcribing">后端转写中…</string>
     <string name="btn_stop_and_save">停止并保存</string>
     <string name="level_hint">音量</string>
     <string name="transcript_placeholder">识别文字会实时显示在这里…</string>
@@ -39,6 +41,7 @@
     <string name="settings_engine_xunfei">讯飞云端识别（xfyun.cn）</string>
     <string name="settings_engine_tencent">腾讯云实时语音识别（cloud.tencent.com）</string>
     <string name="settings_engine_baidu">百度智能云实时语音识别（cloud.baidu.com）</string>
+    <string name="settings_engine_backend">自建后端识别（Whisper，停止后转写）</string>
     <string name="settings_lang_label">识别语言</string>
     <string name="settings_lang_mandarin">普通话</string>
     <string name="settings_lang_cantonese">粤语</string>
@@ -50,11 +53,11 @@
     <string name="settings_annotate_source">翻译来源</string>
     <string name="settings_annotate_backend">自建后端（推荐，手机与电脑同一局域网）</string>
     <string name="settings_annotate_openai">直连 OpenAI 兼容 API（DeepSeek 等）</string>
-    <string name="hint_annotate_backend_url">后端地址（如 http://192.168.1.100:8000）</string>
+    <string name="hint_annotate_backend_url">后端地址（识别 / 注释通用，如 http://192.168.1.100:8000）</string>
     <string name="hint_annotate_api_key">API Key / 后端令牌（可选）</string>
     <string name="hint_annotate_base_url">API Base URL（默认 https://api.deepseek.com）</string>
     <string name="hint_annotate_model">模型（默认 deepseek-chat）</string>
-    <string name="settings_annotate_hint">说明：\n• 自建后端：在电脑上运行本项目 server/ 目录的 FastAPI 服务（详见 server/README.md），手机填 http://电脑IP:8000（需同一 Wi-Fi）；\n• 直连 API：到 platform.deepseek.com（或其他 OpenAI 兼容平台）获取 API Key；\n• 中文注释会以"英文句 + 中文"的形式逐句附加在笔记中。</string>
+    <string name="settings_annotate_hint">说明：\n• 后端地址用于两处：①识别引擎选"自建后端识别"时，录音结束后上传后端转写；②中文注释翻译。\n• 自建后端：在电脑上运行本项目 server/ 目录的 FastAPI 服务（详见 server/README.md），手机填 http://电脑IP:8000（需同一 Wi-Fi）；\n• 直连 API：到 platform.deepseek.com（或其他 OpenAI 兼容平台）获取 API Key；\n• 中文注释会以"英文句 + 中文"的形式逐句附加在笔记中。</string>
     <string name="settings_engine_system">系统语音识别（仅设备装有系统识别服务时可用）</string>
     <string name="settings_xunfei_title">讯飞密钥（控制台获取）</string>
     <string name="hint_app_id">AppID</string>
