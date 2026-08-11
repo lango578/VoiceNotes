@@ -21,6 +21,7 @@ import com.voicenotes.app.R
 import com.voicenotes.app.data.NoteStore
 import com.voicenotes.app.data.Prefs
 import com.voicenotes.app.model.Note
+import com.voicenotes.app.trans.BackendAsrClient
 import com.voicenotes.app.trans.TranslationClient
 import java.io.File
 import java.util.UUID
@@ -155,6 +156,13 @@ class RecordingService : Service() {
                     )
                 )
             }
+            Prefs.ENGINE_BACKEND -> {
+                if (Prefs.annotateBackendUrl(this).isBlank()) {
+                    failStart(getString(R.string.toast_keys_missing))
+                    return
+                }
+                startBackendEngine()
+            }
             else -> {
                 if (!SpeechRecognizer.isRecognitionAvailable(this)) {
                     failStart(getString(R.string.toast_engine_unavailable))
@@ -258,6 +266,50 @@ class RecordingService : Service() {
     }
 
 
+    // ---------------- 自建后端引擎（Whisper） ----------------
+
+    /** 用 MediaRecorder 录音，停止后上传后端 /api/transcribe 转写（类似 WhisperLiveKit）。 */
+    private fun startBackendEngine() {
+        val audioFile = File(NoteStore.recordingsDir(this), "$sessionId.m4a")
+        systemAudioFile = audioFile
+        try {
+            val mr = if (Build.VERSION.SDK_INT >= 31) {
+                MediaRecorder(this)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }
+            mr.apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioSamplingRate(SAMPLE_RATE)
+                setAudioEncodingBitRate(64000)
+                setOutputFile(audioFile)
+                prepare()
+                start()
+            }
+            mediaRecorder = mr
+        } catch (e: Exception) {
+            Log.e(TAG, "MediaRecorder 启动失败", e)
+            mediaRecorder = null
+            systemAudioFile = null
+        }
+
+        RecorderSession.update {
+            it.copy(statusText = getString(R.string.recorder_status_backend_asr))
+        }
+        // 计时线程（无实时转写，停止后统一转写）
+        audioThread = Thread({
+            while (running) {
+                Thread.sleep(500)
+                val now = SystemClock.elapsedRealtime()
+                RecorderSession.update { it.copy(elapsedMs = now - startedAt) }
+                updateNotification(getString(R.string.recorder_status_backend_asr))
+            }
+        }, "backend-timer").also { it.start() }
+    }
+
     // ---------------- 系统引擎 ----------------
 
     private fun startSystemEngine() {
@@ -328,6 +380,7 @@ class RecordingService : Service() {
         val isStreaming = engine == Prefs.ENGINE_XUNFEI ||
             engine == Prefs.ENGINE_TENCENT ||
             engine == Prefs.ENGINE_BAIDU
+        val isBackend = engine == Prefs.ENGINE_BACKEND
         val audioFile = if (isStreaming) {
             audioSink?.finish().also { audioSink = null }
         } else {
@@ -339,31 +392,68 @@ class RecordingService : Service() {
             it.copy(statusText = getString(R.string.recorder_status_stopping))
         }
 
-        if (isStreaming) {
-            val c = streamClient
-            if (c != null) {
-                c.stop {
-                    c.shutdown()
-                    streamClient = null
+        when {
+            isStreaming -> {
+                val c = streamClient
+                if (c != null) {
+                    c.stop {
+                        c.shutdown()
+                        streamClient = null
+                        finalizeAndSave(audioFile)
+                    }
+                } else {
                     finalizeAndSave(audioFile)
                 }
-            } else {
+            }
+            isBackend -> {
+                if (audioFile != null) {
+                    RecorderSession.update {
+                        it.copy(statusText = getString(R.string.recorder_status_backend_transcribing))
+                    }
+                    BackendAsrClient.transcribe(
+                        context = this,
+                        audioFile = audioFile,
+                        onDone = { text, _ ->
+                            finalizeNote(text.trim(), audioFile)
+                        },
+                        onError = { msg ->
+                            Log.e(TAG, "后端转写失败: $msg")
+                            RecorderSession.update {
+                                it.copy(
+                                    recording = false,
+                                    error = msg,
+                                    statusText = msg
+                                )
+                            }
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                            stopSelf()
+                        }
+                    )
+                } else {
+                    finalizeNote("", null)
+                }
+            }
+            else -> {
+                systemRecognizer?.stop()
+                systemRecognizer?.destroy()
+                systemRecognizer = null
                 finalizeAndSave(audioFile)
             }
-        } else {
-            systemRecognizer?.stop()
-            systemRecognizer?.destroy()
-            systemRecognizer = null
-            finalizeAndSave(audioFile)
         }
     }
 
+    /** 从录音会话状态生成笔记（流式引擎路径）。 */
     private fun finalizeAndSave(audioFile: File?) {
         val s = RecorderSession.state
         var transcript = s.committed
         val pending = s.pending.trim()
         if (pending.isNotEmpty()) transcript = (transcript + pending).trim()
-        transcript = transcript.trim()
+        finalizeNote(transcript.trim(), audioFile)
+    }
+
+    /** 用指定转写文本生成并保存笔记（流式/后端共用），并处理英文中文注释。 */
+    private fun finalizeNote(transcript: String, audioFile: File?) {
+        val s = RecorderSession.state
 
         val title = if (transcript.isNotEmpty()) {
             transcript.take(20) + if (transcript.length > 20) "…" else ""
