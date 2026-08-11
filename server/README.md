@@ -51,6 +51,8 @@ docker run -d -p 8000:8000 \
 
 ### 方式三：可选 Whisper 转写（类似 WhisperLiveKit）
 ```bash
+# 需要系统安装 ffmpeg（faster-whisper 解码音频用）
+# Ubuntu/Debian:  sudo apt install ffmpeg    macOS:  brew install ffmpeg
 pip install faster-whisper   # 取消 requirements.txt 里的注释，或单独安装
 export WHISPER_MODEL=small   # tiny/base/small/medium/large-v3
 ```
