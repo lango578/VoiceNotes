@@ -11,7 +11,8 @@
     <string name="recorder_status_recording">正在录音转写…</string>
     <string name="recorder_status_stopping">正在保存…</string>
     <string name="recorder_status_annotating">正在添加中文注释…</string>
-    <string name="recorder_status_backend_asr">后端识别：录音结束后转写</string>
+    <string name="recorder_status_backend_asr">自建后端：边录边转写中…</string>
+    <string name="recorder_status_backend_stream">自建后端：实时转写中（停止后校准）…</string>
     <string name="recorder_status_backend_transcribing">后端转写中…</string>
     <string name="btn_stop_and_save">停止并保存</string>
     <string name="level_hint">音量</string>
