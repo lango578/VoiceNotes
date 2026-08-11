@@ -2,6 +2,8 @@
 
 为"语音笔记"App 提供 **英文→中文逐句注释** 和可选的 **自托管 Whisper 转写**（思路参考 [WhisperLiveKit](https://github.com/QuentinFuxa/WhisperLiveKit)，本项目聚焦你的使用场景，依赖更轻）。
 
+> 🐧 **Linux 部署请直接看 [README_LINUX.md](README_LINUX.md)**：一键安装脚本、systemd 开机自启、GPU(CUDA) 适配、防火墙/Nginx、故障排查。
+
 ## 功能
 
 | 接口 | 方法 | 说明 |
