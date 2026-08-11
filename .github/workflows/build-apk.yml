@@ -1,0 +1,50 @@
+name: Build APK
+
+# 推送到 main 或打 v* 标签时自动构建 APK；
+# 也可以在 GitHub Actions 页面手动触发（workflow_dispatch）。
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # 仓库未提交 gradle-wrapper.jar（二进制），在 CI 里下载生成
+      - name: Restore Gradle wrapper jar
+        run: |
+          curl -fsSL -o gradle/wrapper/gradle-wrapper.jar \
+            https://raw.githubusercontent.com/gradle/gradle/v8.11.1/gradle/wrapper/gradle-wrapper.jar
+          chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Upload Debug APK (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      # 仅打标签时：创建 GitHub Release 并附上 APK，方便用户直接下载安装
+      - name: Create Release with APK
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/debug/app-debug.apk
+          generate_release_notes: true
