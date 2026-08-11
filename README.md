@@ -72,6 +72,7 @@ All recordings and notes are stored **on your device** in the app's private stor
 | **讯飞开放平台**（默认） | https://www.xfyun.cn | 语音听写（流式版） | AppID / APIKey / APISecret | 创建应用默认每日 500 次免费；国产机通用 |
 | **腾讯云** | https://cloud.tencent.com/product/asr | 语音识别（实时语音识别 WebSocket） | AppID / SecretId / SecretKey | 首次有免费额度；16k 中文普通话 |
 | **百度智能云** | https://cloud.baidu.com/product/speech | 实时语音识别 | AppID / API Key / Secret Key | 各接口有免费调用量；App 自动换取 token |
+| **自建后端** | 自己电脑/服务器（见 `server/README.md`） | `/api/transcribe`（faster-whisper） | 后端地址 | 完全离线、自托管（思路参考 WhisperLiveKit）；停止录音后转写 |
 | 阿里云（预留） | https://www.aliyun.com/product/nls | 智能语音交互（NLS） | — | 后续可扩展 |
 | 火山引擎（预留） | https://www.volcengine.com/product/voice | 语音识别 | — | 后续可扩展 |
 | 系统识别 | 无需注册 | 设备自带 | — | 仅带 Google/系统识别服务的手机可用 |
