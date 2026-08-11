@@ -266,48 +266,24 @@ class RecordingService : Service() {
     }
 
 
-    // ---------------- 自建后端引擎（Whisper） ----------------
+    // ---------------- 自建后端引擎（Whisper，流式边录边出字，失败回退整段上传） ----------------
 
-    /** 用 MediaRecorder 录音，停止后上传后端 /api/transcribe 转写（类似 WhisperLiveKit）。 */
+    /**
+     * 通过 WebSocket 把实时 PCM 流送给后端 /ws/transcribe（Whisper 边录边出字，类似 WhisperLiveKit）。
+     * 录音同时仍写 .m4a 文件；若流式链路不可用/无最终结果，停止后回退为整段上传转写。
+     */
     private fun startBackendEngine() {
-        val audioFile = File(NoteStore.recordingsDir(this), "$sessionId.m4a")
-        systemAudioFile = audioFile
-        try {
-            val mr = if (Build.VERSION.SDK_INT >= 31) {
-                MediaRecorder(this)
-            } else {
-                @Suppress("DEPRECATION")
-                MediaRecorder()
-            }
-            mr.apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setAudioSamplingRate(SAMPLE_RATE)
-                setAudioEncodingBitRate(64000)
-                setOutputFile(audioFile)
-                prepare()
-                start()
-            }
-            mediaRecorder = mr
-        } catch (e: Exception) {
-            Log.e(TAG, "MediaRecorder 启动失败", e)
-            mediaRecorder = null
-            systemAudioFile = null
-        }
-
+        val client = BackendStreamClient(
+            baseUrl = Prefs.annotateBackendUrl(this),
+            apiKey = Prefs.annotateApiKey(this),
+            appLang = Prefs.lang(this),
+            onResult = { isFinal, text -> handleTranscript(isFinal, text) },
+            onError = { msg -> handleEngineError(msg) }
+        )
+        startStreamingEngine(client)
         RecorderSession.update {
-            it.copy(statusText = getString(R.string.recorder_status_backend_asr))
+            it.copy(statusText = getString(R.string.recorder_status_backend_stream))
         }
-        // 计时线程（无实时转写，停止后统一转写）
-        audioThread = Thread({
-            while (running) {
-                Thread.sleep(500)
-                val now = SystemClock.elapsedRealtime()
-                RecorderSession.update { it.copy(elapsedMs = now - startedAt) }
-                updateNotification(getString(R.string.recorder_status_backend_asr))
-            }
-        }, "backend-timer").also { it.start() }
     }
 
     // ---------------- 系统引擎 ----------------
@@ -379,7 +355,8 @@ class RecordingService : Service() {
         val engine = Prefs.engine(this)
         val isStreaming = engine == Prefs.ENGINE_XUNFEI ||
             engine == Prefs.ENGINE_TENCENT ||
-            engine == Prefs.ENGINE_BAIDU
+            engine == Prefs.ENGINE_BAIDU ||
+            engine == Prefs.ENGINE_BACKEND
         val isBackend = engine == Prefs.ENGINE_BACKEND
         val audioFile = if (isStreaming) {
             audioSink?.finish().also { audioSink = null }
@@ -399,38 +376,17 @@ class RecordingService : Service() {
                     c.stop {
                         c.shutdown()
                         streamClient = null
-                        finalizeAndSave(audioFile)
+                        val backendNoFinal = isBackend &&
+                            (c as? BackendStreamClient)?.gotFinalResult() != true
+                        if (backendNoFinal) {
+                            // 流式不可用/超时未取到最终结果 → 回退整段上传转写
+                            fallbackUploadBackend(audioFile)
+                        } else {
+                            finalizeAndSave(audioFile)
+                        }
                     }
                 } else {
                     finalizeAndSave(audioFile)
-                }
-            }
-            isBackend -> {
-                if (audioFile != null) {
-                    RecorderSession.update {
-                        it.copy(statusText = getString(R.string.recorder_status_backend_transcribing))
-                    }
-                    BackendAsrClient.transcribe(
-                        context = this,
-                        audioFile = audioFile,
-                        onDone = { text, _ ->
-                            finalizeNote(text.trim(), audioFile)
-                        },
-                        onError = { msg ->
-                            Log.e(TAG, "后端转写失败: $msg")
-                            RecorderSession.update {
-                                it.copy(
-                                    recording = false,
-                                    error = msg,
-                                    statusText = msg
-                                )
-                            }
-                            stopForeground(STOP_FOREGROUND_REMOVE)
-                            stopSelf()
-                        }
-                    )
-                } else {
-                    finalizeNote("", null)
                 }
             }
             else -> {
@@ -439,6 +395,36 @@ class RecordingService : Service() {
                 systemRecognizer = null
                 finalizeAndSave(audioFile)
             }
+        }
+    }
+
+    /** 自建后端引擎回退路径：把录音文件整段上传 /api/transcribe 转写。 */
+    private fun fallbackUploadBackend(audioFile: File?) {
+        if (audioFile != null) {
+            RecorderSession.update {
+                it.copy(statusText = getString(R.string.recorder_status_backend_transcribing))
+            }
+            BackendAsrClient.transcribe(
+                context = this,
+                audioFile = audioFile,
+                onDone = { text, _ ->
+                    finalizeNote(text.trim(), audioFile)
+                },
+                onError = { msg ->
+                    Log.e(TAG, "后端转写失败: $msg")
+                    RecorderSession.update {
+                        it.copy(
+                            recording = false,
+                            error = msg,
+                            statusText = msg
+                        )
+                    }
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+            )
+        } else {
+            finalizeNote("", null)
         }
     }
 
