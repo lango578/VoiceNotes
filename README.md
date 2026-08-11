@@ -44,7 +44,7 @@ All recordings and notes are stored **on your device** in the app's private stor
 | 后台录音 | 前台服务（`microphone` 类型）+ 常驻通知，锁屏/切后台仍可录 |
 | 笔记列表 | 自动以转写前 20 字作为标题，可查看时长/日期/预览 |
 | 编辑分享 | 可编辑标题与正文；分享文字、分享录音、删除 |
-| 多引擎 | 讯飞 / 腾讯云 / 百度智能云 三选一（App 内切换）；另可选用系统识别（需设备带识别服务） |
+| 多引擎 | 讯飞 / 腾讯云 / 百度智能云 / **自建后端（Whisper，边录边出字）** / 系统识别（App 内切换） |
 | 多语言 | 识别语言可切换：普通话 / 粤语 / 英语 / 四川话（支持程度取决于所选引擎） |
 | 英文→中文注释 | 识别为英文时，自动给每句话加中文注释（自建后端 或 直连 DeepSeek 等 API） |
 
@@ -74,7 +74,7 @@ All recordings and notes are stored **on your device** in the app's private stor
 | **讯飞开放平台**（默认） | https://www.xfyun.cn | 语音听写（流式版） | AppID / APIKey / APISecret | 创建应用默认每日 500 次免费；国产机通用 |
 | **腾讯云** | https://cloud.tencent.com/product/asr | 语音识别（实时语音识别 WebSocket） | AppID / SecretId / SecretKey | 首次有免费额度；16k 中文普通话 |
 | **百度智能云** | https://cloud.baidu.com/product/speech | 实时语音识别 | AppID / API Key / Secret Key | 各接口有免费调用量；App 自动换取 token |
-| **自建后端** | 自己电脑/服务器（见 `server/README.md`） | `/api/transcribe`（faster-whisper） | 后端地址 | 完全离线、自托管（思路参考 WhisperLiveKit）；停止录音后转写 |
+| **自建后端** | 自己电脑/服务器（见 `server/README.md`） | `/ws/transcribe` 流式（faster-whisper），失败自动回退 `/api/transcribe` | 后端地址 | 完全离线、自托管（思路参考 WhisperLiveKit）；**边录边出字** |
 | 阿里云（预留） | https://www.aliyun.com/product/nls | 智能语音交互（NLS） | — | 后续可扩展 |
 | 火山引擎（预留） | https://www.volcengine.com/product/voice | 语音识别 | — | 后续可扩展 |
 | 系统识别 | 无需注册 | 设备自带 | — | 仅带 Google/系统识别服务的手机可用 |
