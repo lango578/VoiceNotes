@@ -10,6 +10,7 @@
     <string name="recorder_status_idle">准备就绪</string>
     <string name="recorder_status_recording">正在录音转写…</string>
     <string name="recorder_status_stopping">正在保存…</string>
+    <string name="recorder_status_annotating">正在添加中文注释…</string>
     <string name="btn_stop_and_save">停止并保存</string>
     <string name="level_hint">音量</string>
     <string name="transcript_placeholder">识别文字会实时显示在这里…</string>
@@ -21,6 +22,12 @@
     <string name="btn_stop_play">停止播放</string>
     <string name="btn_share_text">分享文字</string>
     <string name="btn_share_audio">分享录音</string>
+    <string name="zh_annotation_label">中文注释</string>
+    <string name="btn_annotate">添加/刷新中文注释</string>
+    <string name="toast_annotating">正在添加中文注释…</string>
+    <string name="toast_annotate_done">中文注释已更新</string>
+    <string name="toast_annotate_empty">该笔记不是英文，无需注释</string>
+    <string name="toast_annotate_failed">中文注释失败：%1$s</string>
     <string name="btn_save">保存</string>
     <string name="btn_delete">删除</string>
     <string name="delete_confirm">确定删除这条笔记吗？录音文件也会一并删除。</string>
@@ -38,6 +45,16 @@
     <string name="settings_lang_english">英语</string>
     <string name="settings_lang_sichuan">四川话</string>
     <string name="settings_lang_hint">说明：方言/语种支持取决于所选引擎——讯飞、百度支持普通话/粤语/英语/四川话；腾讯云当前按普通话/英语处理。</string>
+    <string name="settings_annotate_title">英文→中文注释</string>
+    <string name="settings_annotate_switch">识别为英文时，自动给每句话加中文注释</string>
+    <string name="settings_annotate_source">翻译来源</string>
+    <string name="settings_annotate_backend">自建后端（推荐，手机与电脑同一局域网）</string>
+    <string name="settings_annotate_openai">直连 OpenAI 兼容 API（DeepSeek 等）</string>
+    <string name="hint_annotate_backend_url">后端地址（如 http://192.168.1.100:8000）</string>
+    <string name="hint_annotate_api_key">API Key / 后端令牌（可选）</string>
+    <string name="hint_annotate_base_url">API Base URL（默认 https://api.deepseek.com）</string>
+    <string name="hint_annotate_model">模型（默认 deepseek-chat）</string>
+    <string name="settings_annotate_hint">说明：\n• 自建后端：在电脑上运行本项目 server/ 目录的 FastAPI 服务（详见 server/README.md），手机填 http://电脑IP:8000（需同一 Wi-Fi）；\n• 直连 API：到 platform.deepseek.com（或其他 OpenAI 兼容平台）获取 API Key；\n• 中文注释会以"英文句 + 中文"的形式逐句附加在笔记中。</string>
     <string name="settings_engine_system">系统语音识别（仅设备装有系统识别服务时可用）</string>
     <string name="settings_xunfei_title">讯飞密钥（控制台获取）</string>
     <string name="hint_app_id">AppID</string>
