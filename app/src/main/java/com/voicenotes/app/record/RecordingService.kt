@@ -116,7 +116,7 @@ class RecordingService : Service() {
                 }
                 startStreamingEngine(
                     XunfeiIatClient(
-                        appId, apiKey, apiSecret,
+                        appId, apiKey, apiSecret, language = Prefs.lang(this),
                         onResult = { isFinal, text -> handleTranscript(isFinal, text) },
                         onError = { msg -> handleEngineError(msg) }
                     )
@@ -132,7 +132,7 @@ class RecordingService : Service() {
                 }
                 startStreamingEngine(
                     TencentIatClient(
-                        appId, secretId, secretKey,
+                        appId, secretId, secretKey, language = Prefs.lang(this),
                         onResult = { isFinal, text -> handleTranscript(isFinal, text) },
                         onError = { msg -> handleEngineError(msg) }
                     )
@@ -148,7 +148,7 @@ class RecordingService : Service() {
                 }
                 startStreamingEngine(
                     BaiduIatClient(
-                        appId, apiKey, secretKey,
+                        appId, apiKey, secretKey, language = Prefs.lang(this),
                         onResult = { isFinal, text -> handleTranscript(isFinal, text) },
                         onError = { msg -> handleEngineError(msg) }
                     )
