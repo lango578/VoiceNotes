@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 笔记与录音文件均存放在应用内部存储，可通过 FileProvider 分享 -->
+    <files-path name="files" path="." />
+</paths>
