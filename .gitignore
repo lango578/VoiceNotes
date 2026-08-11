@@ -9,6 +9,10 @@
 .cxx
 app/build
 
+# 便携包等大文件（不进 Git，只传 Release）
+dist/*.zip
+*.zip
+
 # 签名相关（切勿提交）
 keystore.properties
 *.keystore
