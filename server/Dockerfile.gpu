@@ -1,0 +1,22 @@
+# VoiceNotes 后端 GPU 镜像（可选）：NVIDIA CUDA 12 + faster-whisper（float16 加速）
+# 需要主机已装 NVIDIA 驱动，并用 nvidia-container-toolkit 运行：
+#   docker build -f Dockerfile.gpu -t voicenotes-server-gpu .
+#   docker run -d --gpus all -p 8000:8000 --env-file .env voicenotes-server-gpu
+FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg python3 python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt faster-whisper
+
+COPY main.py .
+
+ENV WHISPER_DEVICE=cuda \
+    WHISPER_COMPUTE_TYPE=float16
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
