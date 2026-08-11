@@ -29,6 +29,7 @@ class TencentIatClient(
     private val appId: String,
     private val secretId: String,
     private val secretKey: String,
+    private val language: String,
     private val onResult: (isFinal: Boolean, text: String) -> Unit,
     private val onError: (String) -> Unit
 ) : IatStreamClient {
@@ -37,8 +38,6 @@ class TencentIatClient(
         private const val TAG = "TencentIatClient"
         private const val HOST = "asr.cloud.tencent.com"
         private const val PATH = "/asr/v2"
-        /** 16k 中文普通话引擎。 */
-        private const val ENGINE_MODEL = "16k_zh"
         private const val CLOSE_TIMEOUT_MS = 6_000L
     }
 
@@ -105,6 +104,10 @@ class TencentIatClient(
 
     // ---------------- 内部实现 ----------------
 
+    /** 16k 中文普通话；英语用 16k_en。 */
+    private val engineModel: String
+        get() = if (language == "english") "16k_en" else "16k_zh"
+
     private fun openSession() {
         try {
             val request = Request.Builder().url(buildUrl()).build()
@@ -122,7 +125,7 @@ class TencentIatClient(
         val voiceId = UUID.randomUUID().toString()
 
         val params = sortedMapOf(
-            "engine_model_type" to ENGINE_MODEL,
+            "engine_model_type" to engineModel,
             "expired" to expired.toString(),
             "needvad" to "1",
             "nonce" to nonce,
