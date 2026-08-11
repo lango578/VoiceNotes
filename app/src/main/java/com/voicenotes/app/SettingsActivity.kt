@@ -46,6 +46,17 @@ class SettingsActivity : AppCompatActivity() {
         binding.etBaiduAppId.setText(Prefs.baiduAppId(this))
         binding.etBaiduApiKey.setText(Prefs.baiduApiKey(this))
         binding.etBaiduSecretKey.setText(Prefs.baiduSecretKey(this))
+        // 英文→中文注释
+        binding.switchAnnotate.isChecked = Prefs.annotateZhEnabled(this)
+        if (Prefs.annotateProvider(this) == Prefs.ANNOTATE_PROVIDER_OPENAI) {
+            binding.rbAnnotateOpenai.isChecked = true
+        } else {
+            binding.rbAnnotateBackend.isChecked = true
+        }
+        binding.etAnnotateBackendUrl.setText(Prefs.annotateBackendUrl(this))
+        binding.etAnnotateApiKey.setText(Prefs.annotateApiKey(this))
+        binding.etAnnotateBaseUrl.setText(Prefs.annotateBaseUrl(this))
+        binding.etAnnotateModel.setText(Prefs.annotateModel(this))
 
         binding.btnSaveSettings.setOnClickListener {
             val selected = when {
@@ -74,6 +85,19 @@ class SettingsActivity : AppCompatActivity() {
             Prefs.setBaiduAppId(this, binding.etBaiduAppId.text?.toString().orEmpty())
             Prefs.setBaiduApiKey(this, binding.etBaiduApiKey.text?.toString().orEmpty())
             Prefs.setBaiduSecretKey(this, binding.etBaiduSecretKey.text?.toString().orEmpty())
+            // 英文→中文注释
+            Prefs.setAnnotateZhEnabled(this, binding.switchAnnotate.isChecked)
+            val annotateProvider =
+                if (binding.rbAnnotateOpenai.isChecked) {
+                    Prefs.ANNOTATE_PROVIDER_OPENAI
+                } else {
+                    Prefs.ANNOTATE_PROVIDER_BACKEND
+                }
+            Prefs.setAnnotateProvider(this, annotateProvider)
+            Prefs.setAnnotateBackendUrl(this, binding.etAnnotateBackendUrl.text?.toString().orEmpty())
+            Prefs.setAnnotateApiKey(this, binding.etAnnotateApiKey.text?.toString().orEmpty())
+            Prefs.setAnnotateBaseUrl(this, binding.etAnnotateBaseUrl.text?.toString().orEmpty())
+            Prefs.setAnnotateModel(this, binding.etAnnotateModel.text?.toString().orEmpty())
 
             Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_SHORT).show()
             finish()
