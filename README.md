@@ -2,6 +2,8 @@
 
 一款"边录音边转笔记"的 Android 应用：**说话的同时实时显示转写文字，录音保存为音频文件，结束后自动生成一条可编辑、可分享的笔记**。
 
+> 🌐 **[English Complete Tutorial (README_EN.md)](README_EN.md)** — 完整英文教程：安装、各识别引擎配置、自建后端、英文→中文注释、故障排查。
+
 - 目标设备：Android 16（API 36），OPPO / ColorOS 16 亲测可用
 - 最小支持：Android 8.0（API 26）
 - 语言：Kotlin + 传统 View（无 Compose，构建简单稳定）
