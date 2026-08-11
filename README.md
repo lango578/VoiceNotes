@@ -21,6 +21,7 @@
 - **Notes management**: Auto-titled notes with edit / playback / share / delete.
 - **Multiple recognition engines**: Xunfei (default), Tencent Cloud, and Baidu AI — switch anytime in Settings; plus the on-device system recognizer when available.
 - **Language switching**: Choose recognition language — Mandarin, Cantonese, English, or Sichuan dialect (support depends on the selected engine).
+- **English→Chinese annotations**: When English is recognized, each sentence gets a Chinese translation underneath (via your own backend server or a third-party API such as DeepSeek).
 
 ### Requirements
 - Android 8.0+ (API 26); optimized for Android 16 (API 36).
@@ -43,6 +44,7 @@ All recordings and notes are stored **on your device** in the app's private stor
 | 编辑分享 | 可编辑标题与正文；分享文字、分享录音、删除 |
 | 多引擎 | 讯飞 / 腾讯云 / 百度智能云 三选一（App 内切换）；另可选用系统识别（需设备带识别服务） |
 | 多语言 | 识别语言可切换：普通话 / 粤语 / 英语 / 四川话（支持程度取决于所选引擎） |
+| 英文→中文注释 | 识别为英文时，自动给每句话加中文注释（自建后端 或 直连 DeepSeek 等 API） |
 
 ---
 
@@ -85,7 +87,16 @@ All recordings and notes are stored **on your device** in the app's private stor
 > - 腾讯云/百度若开通后提示权限或鉴权问题，确认已在新版控制台**开通对应付费/免费服务**。
 > - 各家密钥请妥善保管，仅用于你自己的 App。
 
-### 4. 构建并安装
+### 4. 英文→中文注释（可选）
+
+识别到英文时，可为每句话自动添加中文注释。两种翻译来源（设置页切换）：
+
+- **自建后端（推荐）**：在电脑上运行本项目 `server/` 目录的 FastAPI 服务（翻译可选 DeepSeek/OpenAI 兼容 API 或百度翻译，也可选装 faster-whisper 做自托管转写，思路参考 [WhisperLiveKit](https://github.com/QuentinFuxa/WhisperLiveKit)）。
+  手机设置页填 `http://电脑IP:8000`（与电脑同一 Wi-Fi）。
+  详见 [server/README.md](server/README.md)。
+- **直连第三方 API**：在设置页填 DeepSeek（platform.deepseek.com）等 OpenAI 兼容平台的 API Key 即可，无需后端。
+
+### 5. 构建并安装
 
 方式一（Android Studio）：
 - 手机开 USB 调试并连接电脑 → 点击 ▶ Run
@@ -96,7 +107,7 @@ All recordings and notes are stored **on your device** in the app's private stor
 # 产物在 app\build\outputs\apk\debug\app-debug.apk
 ```
 
-### 5. 使用
+### 6. 使用
 
 1. 首次使用点右下角 **⊕ 麦克风按钮** → 授予"麦克风""通知"权限
 2. 进入录音页，开始说话，**转写文字实时出现**
