@@ -445,6 +445,10 @@ docker run -d --name voicenotes-server-gpu --restart=unless-stopped \
 
 服务端日志会看到请求（用 `journalctl -u voicenotes-server -f` 观察）。首次转写会先下载模型，需等待 1~3 分钟。
 
+> **流式模式（边录边出字）**：App 会优先连接 `ws://<地址>:8000/ws/transcribe` 边录边转写；
+> 若流式失败（faster-whisper 未装 / 网络不通 / 超时），App 自动回退为录音结束后整段上传 `/api/transcribe`，不影响笔记生成。
+> CPU 上流式中间结果有 3~15 秒延迟属正常；GPU（`WHISPER_DEVICE=cuda` + `float16`）或 `tiny/base` 模型更跟手。
+
 
 ### 6.3 无法直连 HuggingFace（国内服务器）
 
