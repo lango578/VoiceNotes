@@ -19,7 +19,7 @@
 | 后台录音 | 前台服务（`microphone` 类型）+ 常驻通知，锁屏/切后台仍可录 |
 | 笔记列表 | 自动以转写前 20 字作为标题，可查看时长/日期/预览 |
 | 编辑分享 | 可编辑标题与正文；分享文字、分享录音、删除 |
-| 双引擎 | 默认讯飞云识别（国行 OPPO 可用）；可选系统识别（需设备带 Google 服务） |
+| 多引擎 | 讯飞 / 腾讯云 / 百度智能云 三选一（App 内切换）；另可选用系统识别（需设备带识别服务） |
 
 ---
 
@@ -40,16 +40,27 @@
    （脚本会从 GitHub/Gitee 下载 Gradle 8.11.1 的 wrapper jar；你的电脑需要能联网）
 3. 等待 Gradle Sync 完成（首次会自动下载 Gradle 8.11.1 与依赖，需联网）
 
-### 3. 申请讯飞密钥（免费，10 分钟）
+### 3. 注册并开通识别服务（选一家即可，均有免费额度）
 
-1. 打开 https://www.xfyun.cn 注册并登录
-2. 进入**控制台 → 创建应用**（选 WebAPI 平台）
-3. 在应用里**添加服务 → 语音听写（流式版）**（创建应用默认每天 500 次免费调用，个人笔记足够）
-4. 在**控制台 → 服务页**复制三串密钥：
-   - `AppID`、`APIKey`、`APISecret`（均为 32 位）
-5. 安装 App 后，在应用内 **右上角设置** 中填入这三项，选择引擎为"讯飞云端识别"，保存
+| 服务商 | 注册/控制台网址 | 需要开通的服务 | 需要的密钥 | 说明 |
+|---|---|---|---|---|
+| **讯飞开放平台**（默认） | https://www.xfyun.cn | 语音听写（流式版） | AppID / APIKey / APISecret | 创建应用默认每日 500 次免费；国产机通用 |
+| **腾讯云** | https://cloud.tencent.com/product/asr | 语音识别（实时语音识别 WebSocket） | AppID / SecretId / SecretKey | 首次有免费额度；16k 中文普通话 |
+| **百度智能云** | https://cloud.baidu.com/product/speech | 实时语音识别 | AppID / API Key / Secret Key | 各接口有免费调用量；App 自动换取 token |
+| 阿里云（预留） | https://www.aliyun.com/product/nls | 智能语音交互（NLS） | — | 后续可扩展 |
+| 火山引擎（预留） | https://www.volcengine.com/product/voice | 语音识别 | — | 后续可扩展 |
+| 系统识别 | 无需注册 | 设备自带 | — | 仅带 Google/系统识别服务的手机可用 |
 
-> 注意：讯飞服务默认**不开启 IP 白名单**，手机 4G/5G/Wi-Fi 均可直接调用，无需额外配置。
+**操作步骤（以讯飞为例，其他类似）：**
+1. 打开上表对应网址，注册并登录（建议完成实名认证）
+2. 进入控制台 → 创建应用 / 开通对应语音识别服务
+3. 在控制台获取密钥（上表最后一列）
+4. 安装 App 后，在应用内 **右上角设置** 中选择引擎并填入密钥，保存
+
+> 注意：
+> - 讯飞默认**不开启 IP 白名单**，手机 4G/5G/Wi-Fi 均可直接调用。
+> - 腾讯云/百度若开通后提示权限或鉴权问题，确认已在新版控制台**开通对应付费/免费服务**。
+> - 各家密钥请妥善保管，仅用于你自己的 App。
 
 ### 4. 构建并安装
 
@@ -75,9 +86,9 @@
 
 | 需求 | 方案 |
 |---|---|
-| 实时语音转写 | `SpeechRecognizer` 之外的国产可稳定方案：**讯飞语音听写（流式版）WebSocket API**（`wss://iat-api.xfyun.cn/v2/iat`），HMAC-SHA256 鉴权，16kHz PCM 流式上传，启用 `dwa=wpgs` 动态修正获得字级实时结果 |
+| 实时语音转写（多引擎） | 统一接口 `IatStreamClient`（start/feedPcm/stop/shutdown），已内置三家：**讯飞**（`wss://iat-api.xfyun.cn/v2/iat`，HMAC-SHA256 + `dwa=wpgs` 字级实时）、**腾讯云**（`wss://asr.cloud.tencent.com/asr/v2/{appid}`，HMAC-SHA1 签名 + `slice_type` 结果）、**百度智能云**（`wss://vop.baidu.com/realtime_asr`，OAuth token + START/MID_TEXT/FIN_TEXT 帧）；另可选系统 `SpeechRecognizer` |
 | 后台持续录音 | 前台服务 + `foregroundServiceType="microphone"`，声明 `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_MICROPHONE` 权限（Android 14+ 强制），启动前必须已授予 `RECORD_AUDIO` |
-| 录音文件 | 单一 `AudioRecord` 采集 16kHz/16bit/单声道 PCM，一路喂讯飞，一路经 `MediaCodec(AAC)+MediaMuxer` 写 `.m4a`（避免双开麦克风冲突） |
+| 录音文件 | 单一 `AudioRecord` 采集 16kHz/16bit/单声道 PCM，一路喂当前引擎，一路经 `MediaCodec(AAC)+MediaMuxer` 写 `.m4a`（避免双开麦克风冲突） |
 | Android 13+ 通知 | 运行时申请 `POST_NOTIFICATIONS`；前台服务通知带"停止"操作 |
 | Android 16 edge-to-edge | 所有页面根布局通过 `WindowInsetsCompat.systemBars()` 应用内边距 |
 | 主线程安全 | 识别回调经全局 `RecorderSession` 汇总，统一在主线程通知 UI |
@@ -89,12 +100,15 @@ app/src/main/java/com/voicenotes/app/
 ├── MainActivity.kt            笔记列表
 ├── RecorderActivity.kt        录音转写页（实时文字/计时/音量）
 ├── NoteDetailActivity.kt      笔记详情（播放/编辑/分享/删除）
-├── SettingsActivity.kt        设置（引擎选择 + 讯飞密钥）
+├── SettingsActivity.kt        设置（引擎选择 + 各家密钥）
 ├── model/Note.kt              笔记数据模型
 ├── data/NoteStore.kt          文件化笔记存储
 ├── data/Prefs.kt              SharedPreferences 设置
-├── record/RecordingService.kt 前台录音服务（总调度）
+├── record/RecordingService.kt 前台录音服务（总调度，按引擎分发）
+├── record/IatStreamClient.kt  流式识别客户端统一接口
 ├── record/XunfeiIatClient.kt  讯飞流式识别客户端
+├── record/TencentIatClient.kt 腾讯云实时语音识别客户端
+├── record/BaiduIatClient.kt   百度智能云实时语音识别客户端
 ├── record/SystemRecognizerClient.kt  系统识别（备用引擎）
 ├── record/AacFileWriter.kt    PCM→AAC(.m4a) 编码器
 ├── record/WavFileWriter.kt    PCM→WAV 兜底
