@@ -35,7 +35,7 @@ class XunfeiIatClient(
     private val apiSecret: String,
     private val onResult: (isFinal: Boolean, text: String) -> Unit,
     private val onError: (String) -> Unit
-) {
+) : IatStreamClient {
     companion object {
         private const val TAG = "XunfeiIatClient"
         private const val HOST = "iat-api.xfyun.cn"
@@ -61,14 +61,14 @@ class XunfeiIatClient(
     private var onStopped: (() -> Unit)? = null
 
     /** 开始识别（打开第一个会话）。 */
-    fun start() {
+    override fun start() {
         active = true
         stopRequested = false
         openSession()
     }
 
     /** 录音进行中持续调用：上传 PCM。 */
-    fun feedPcm(data: ByteArray) {
+    override fun feedPcm(data: ByteArray) {
         if (stopRequested || !active) return
         val ws = webSocket
         if (ws == null || sessionEnding) return // 会话建立中或正在收尾，丢弃这一小段
@@ -90,7 +90,7 @@ class XunfeiIatClient(
     }
 
     /** 停止识别，等待服务端返回最后的最终结果后回调 [onStopped]。 */
-    fun stop(onStopped: () -> Unit) {
+    override fun stop(onStopped: () -> Unit) {
         if (!active && webSocket == null) {
             onStopped()
             return
@@ -102,7 +102,7 @@ class XunfeiIatClient(
     }
 
     /** 释放 OkHttp 资源（应在 onStopped 回调之后调用）。 */
-    fun shutdown() {
+    override fun shutdown() {
         webSocket?.close(1000, null)
         webSocket = null
         client.dispatcher.executorService.shutdown()
